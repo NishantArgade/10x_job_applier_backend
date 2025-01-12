@@ -1,13 +1,16 @@
 <?php
 
+use App\Http\Controllers\ApplicationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/test', function () {
-    return response()->json(['message' => 'Hello from Laravel 🚀!']);
+// middleware(['auth']) add later 
+Route::prefix('dash/page')->group(function () {
+
+    Route::get('/applications', [ApplicationController::class, 'index']);
+
 });
-// Route::get('/users', [UserController::class, 'index']);
-// Route::post('/users', [UserController::class, 'store']);
+
