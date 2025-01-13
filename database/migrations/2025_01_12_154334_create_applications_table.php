@@ -28,8 +28,8 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes
-            $table->index(['user_id']); 
-            $table->index(['status']);
+            $table->index(['user_id']);
+            $table->unique(['email', 'apply_for']);
             $table->index(['recruitor_reply']);
         });
     }

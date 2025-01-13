@@ -9,8 +9,7 @@ Route::get('/', function () {
 
 // middleware(['auth']) add later 
 Route::prefix('dash/page')->group(function () {
-
-    Route::get('/applications', [ApplicationController::class, 'index']);
+    Route::post('/import-applications', [ApplicationController::class, 'index']);
 
 });
 
