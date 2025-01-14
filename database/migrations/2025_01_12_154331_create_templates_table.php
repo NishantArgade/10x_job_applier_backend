@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('templates', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->longText('content');
+            $table->string('subject');
+            $table->longText('body');
             $table->boolean('is_active')->default(false);
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
