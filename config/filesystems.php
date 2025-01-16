@@ -57,6 +57,11 @@ return [
             'throw' => false,
         ],
 
+        'upload' => [
+            'driver' => 'local',
+            'root' => storage_path('app/upload'), 
+            'visibility' => 'public',
+        ],
     ],
 
     /*

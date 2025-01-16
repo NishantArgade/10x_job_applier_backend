@@ -4,12 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Imports\ApplicationsImport;
-use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 
-class ApplicationController extends Controller
+class ImportJobApplications
 {
-    public function index(Request $request)
+    public function __invoke(Request $request)
     {
         $validated = $request->validate([
             'applications_csv' => 'required|mimes:csv,txt',
@@ -22,8 +21,6 @@ class ApplicationController extends Controller
             $validated['applications_csv']
         );
 
-        return [
-            'message' => 'Application data imported successfully.'
-        ];
+        return 'Application data imported successfully';
     }
 }
