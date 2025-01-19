@@ -6,11 +6,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasRoles, HasFactory, Notifiable;
+
 
     /**
      * The attributes that are mass assignable.
@@ -46,15 +48,15 @@ class User extends Authenticatable
         ];
     }
 
-    // public function isAdmin()
-    // {
-    //     return $this->hasRole('Admin');
-    // }
+    public function isAdmin()
+    {
+        return $this->hasRole(Role::ADMIN);
+    }
 
-    // public function isClient()
-    // {
-    //     return $this->hasRole('Client');
-    // }
+    public function isClient()
+    {
+        return $this->hasRole(Role::CLIENT);
+    }
 
     public function profile()
     {
@@ -74,5 +76,39 @@ class User extends Authenticatable
     public function resumes()
     {
         return $this->hasMany(Resume::class);
+    }
+
+    public function permissionNames()
+    {
+        return $this->getAllPermissions()->pluck('name');
+    }
+
+    public function getRedirectURL(string|int $pathOrPageCode = null): int|string
+    {
+        $pageUrls = $this->getFrontendUrlsMapping();
+
+        if ($pathOrPageCode) {
+            return $pageUrls[$pathOrPageCode] ?? $pathOrPageCode;
+        }
+
+        if ($this->isAdmin()) {
+            return $pageUrls[$pageUrls[2]];
+        }
+
+        return $pageUrls[$pageUrls[1]];
+    }
+
+    public function getFrontendUrlsMapping()
+    {
+        return [
+            1 => '/dashbard',
+            2 => '/dashbard/manage',
+            3 => '/applications',
+            4 => '/templates',
+            5 => '/resumes',
+            6 => '/profile',
+            7 => '/settings',
+            8 => '/logout',
+        ];
     }
 }

@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Template;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class TemplateController extends Controller
 {
     public function index(Request $request)
     {
-        //
+        $templates = Template::all();
+
+        return response()->json([
+            'templates' => $templates
+        ]);
     }
 
     public function store(Request $request)
@@ -25,7 +29,7 @@ class TemplateController extends Controller
         $payload = [
             'name' => $validated['name'],
             'body' => $validated['body'],
-            'user_id' => 1, //auth()->id(),
+            'user_id' => auth()->id(),
             ...(isset($validated['subject'])) ? ['subject' => $validated['subject']] : [],
             ...(isset($validated['is_active'])) ? ['is_active' => $validated['is_active']] : []
         ];

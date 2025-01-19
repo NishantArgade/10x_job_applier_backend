@@ -44,7 +44,7 @@ class SendApplicationEmail implements ShouldQueue
                 ]
             );
 
-            if (app()->environment('local') && env('MAIL_MAILER') === 'log') {
+            if (! app()->isProduction() && env('MAIL_MAILER') === 'log') {
                 Log::channel('email')->info(sprintf(
                     "Email Content:\nFrom: %s\nSubject: %s\nTo: %s\nContent: %s\nAttachment: %s",
                     config('mail.from.address'),

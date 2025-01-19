@@ -11,7 +11,9 @@ class ResumeController extends Controller
 {
     public function index(Request $request)
     {
-        //
+        $resumes = Resume::all();
+
+        return $resumes;
     }
 
     public function store(Request $request)
@@ -33,7 +35,7 @@ class ResumeController extends Controller
             'path' => $filePath,
             'is_active' => $validated['is_active'] ?? false,
             'size' => $file->getSize(),
-            'user_id' => 1 // auth()->id(), 
+            'user_id' => auth()->id() 
         ]);
 
         return response()->json([

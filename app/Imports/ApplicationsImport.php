@@ -33,7 +33,7 @@ class ApplicationsImport implements ToModel, WithHeadingRow, WithUpserts, WithBa
             'resume_id',
         ];
 
-        $row['user_id'] = 1; //@todo add: auth()->id();
+        $row['user_id'] = auth()->id();
         $row['template_id'] = $this->templateId;
         $row['resume_id'] = $this->resumeId;
 
