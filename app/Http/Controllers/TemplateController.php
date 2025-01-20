@@ -41,4 +41,37 @@ class TemplateController extends Controller
             'template' => $template
         ], 201);
     }
+
+    public function update(Request $request, Template $template)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'subject' => 'nullable|string',
+            'body' => 'required|string',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $payload = [
+            'name' => $validated['name'],
+            'body' => $validated['body'],
+            ...(isset($validated['subject'])) ? ['subject' => $validated['subject']] : [],
+            ...(isset($validated['is_active'])) ? ['is_active' => $validated['is_active']] : []
+        ];
+
+        $template->update($payload);
+
+        return response()->json([
+            'message' => 'Template updated successfully',
+            'template' => $template
+        ]);
+    }
+
+    public function destroy(Request $request, Template $template)
+    {
+        $template->delete();
+
+        return response()->json([
+            'message' => 'Template deleted successfully'
+        ]);
+    }
 }

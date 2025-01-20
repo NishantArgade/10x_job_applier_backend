@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Template extends Model
 {
@@ -15,18 +15,8 @@ class Template extends Model
         'content' => 'array',
     ];
 
-    public function user()
+    public function profile()
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function applications()
-    {
-        return $this->hasMany(Application::class);
-    }
-
-    public function profiles()
-    {
-        return $this->hasMany(Profile::class);
+        return $this->belongsTo(Profile::class);
     }
 }

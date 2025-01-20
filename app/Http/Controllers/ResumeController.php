@@ -43,4 +43,29 @@ class ResumeController extends Controller
             'resume' => $resume,
         ], 201);
     }
+
+    public function update(Request $request, Resume $resume)
+    {
+        $validated = $request->validate([
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $resume->update([
+            'is_active' => $validated['is_active'] ?? false,
+        ]);
+
+        return response()->json([
+            'message' => 'Resume updated successfully!',
+            'resume' => $resume,
+        ]);
+    }
+
+    public function destroy(Resume $resume)
+    {
+        $resume->delete();
+
+        return response()->json([
+            'message' => 'Resume deleted successfully!',
+        ]);
+    }
 }

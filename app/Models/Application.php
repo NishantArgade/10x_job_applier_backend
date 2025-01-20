@@ -16,9 +16,9 @@ class Application extends Model
         'recruitor_reply' => 'boolean',
     ];
 
-    public function user()
+    public function profile()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Profile::class);
     }
 
     public function template()

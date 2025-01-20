@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('profiles', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->nullable(false);
-            $table->string('role')->nullable(false);
+            $table->string('name')->nullable();
+            $table->string('role')->nullable();
             $table->string('email')->unique()->nullable(false);
             $table->string('phone')->nullable();
             $table->json('skills')->nullable();

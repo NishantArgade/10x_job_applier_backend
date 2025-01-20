@@ -19,13 +19,31 @@ class Profile extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function resume()
+    public function applications()
     {
-        return $this->belongsTo(Resume::class);
+        return $this->hasMany(Application::class);
     }
 
-    public function template()
+    public function templates()
     {
-        return $this->belongsTo(Template::class);
+        return $this->hasMany(Template::class);
     }
+
+    public function resumes()
+    {
+        return $this->hasMany(Resume::class);
+    }
+
+      // Active Template
+      public function activeTemplate()
+      {
+          return $this->belongsTo(Template::class, 'template_id');
+      }
+  
+      // Active Resume
+      public function activeResume()
+      {
+          return $this->belongsTo(Resume::class, 'resume_id');
+      }
+
 }
