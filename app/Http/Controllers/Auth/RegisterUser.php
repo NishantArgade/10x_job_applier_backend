@@ -8,9 +8,14 @@ use Illuminate\Http\Request;
 use App\Events\UserRegistered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Services\PageConfigurationService;
 
 class RegisterUser
 {
+    public function __construct(protected PageConfigurationService $pageConfigurationService)
+    {
+    }
+    
     public function store(Request $request)
     {
         $request->validate([
@@ -33,7 +38,8 @@ class RegisterUser
 
         return response()->json([
             'message' => 'User registered successfully',
-            'user' => $user
+            'user' => $user,
+            'redirect' => $this->pageConfigurationService->getRedirectURL(),
         ], 201);
     }
 }

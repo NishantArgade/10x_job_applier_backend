@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\RegisterUser;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 Route::prefix('api/v1')
+    ->middleware('api')
     ->group(function () {
 
         Route::post('/login', [AuthenticatedSessionController::class, 'store'])
