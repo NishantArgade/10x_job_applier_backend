@@ -34,7 +34,7 @@ class RegisterUser
 
         event(new UserRegistered($user));
 
-        Auth::login($user);
+        Auth::login($user, true);
 
         return response()->json([
             'message' => 'User registered successfully',
