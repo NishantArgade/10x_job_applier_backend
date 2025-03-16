@@ -47,10 +47,10 @@ class SocialAuthController extends Controller
             Auth::login($user, true);
             session()->regenerate();
 
-            return redirect()->to(env('FRONTEND_URL').$this->pageConfigurationService->getRedirectURL());
+            return redirect()->to(config('app.frontend_url').$this->pageConfigurationService->getRedirectURL());
 
         } catch (\Exception $e) {
-            return redirect()->to(env('FRONTEND_URL').'/auth/login');
+            return redirect()->to(config('app.frontend_url').'/auth/login');
         }
     }
 }
