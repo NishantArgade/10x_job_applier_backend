@@ -83,6 +83,8 @@ class JobApplicationContoller extends Controller
             'resume_id' => 'exists:resumes,id',
         ]);
 
+       
+
         Excel::import(
             new ApplicationsImport($validated['template_id'], $validated['resume_id']),
             $validated['applications_csv']

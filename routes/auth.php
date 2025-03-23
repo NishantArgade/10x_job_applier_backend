@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterUser;
 use App\Http\Controllers\Auth\AuthController;
@@ -25,4 +26,14 @@ Route::prefix('api/v1/auth')->group(function () {
 
     // Check Session
     Route::middleware('api')->get('/check-session', [AuthController::class, 'checkSession']);
+
+    // create temp auth session
+    Route::get('/temp', function () {
+        Auth::login(User::find(1));
+        return response()->json([
+            'message' => 'Temp session created',
+            'user' => Auth::user()
+        ]);
+    });
+
 });
