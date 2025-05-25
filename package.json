@@ -3,7 +3,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "bot:naukri": "node automation/naukriBot.js"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.20",
@@ -13,5 +14,10 @@
         "postcss": "^8.4.47",
         "tailwindcss": "^3.4.13",
         "vite": "^6.0"
+    },
+    "dependencies": {
+        "selenium-webdriver": "^4.18.1",
+        "chromedriver": "^136.0.0",
+        "dotenv": "^16.4.5"
     }
 }
