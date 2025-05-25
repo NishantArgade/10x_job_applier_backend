@@ -14,15 +14,13 @@ const NAUKRI_PROFILE_URL =
     "https://www.naukri.com/mnjuser/profile?action=modalOpen";
 const NAUKRI_JOBS_URL = "https://www.naukri.com/mnjuser/recommendedjobs";
 const DEFAULT_JOB_TITLE = "Software Developer";
-const DEFAULT_MAX_APPLICATIONS = 5;
 const DEFAULT_RESUME_HEADLINE =
     "Full Stack Developer | React, Node.js | Open to Remote | Immediate Joiner";
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, ".env") });
+dotenv.config();
 
 // Setup logging
-const logDir = path.join(__dirname, "logs");
+const logDir = path.join(__dirname, "..", "storage", "logs");
 if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir, { recursive: true });
 }
