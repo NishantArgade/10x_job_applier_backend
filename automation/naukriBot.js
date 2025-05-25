@@ -60,40 +60,51 @@ function log(message, level = "INFO") {
 // Initialize WebDriver
 async function initializeDriver(headless = false) {
     log("Initializing Chrome WebDriver");
-    
+
     try {
         // Use the specific ChromeDriver version based on your installed Chrome
         const chrome = await import("selenium-webdriver/chrome.js");
         const options = new chrome.Options();
-        
+
         if (headless) {
             options.addArguments("--headless=new"); // Use new headless mode
             options.addArguments("--disable-gpu");
         }
-        
+
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--window-size=1920,1080");
-        
+
         // Try to get Chrome version
         log("Checking Chrome browser version...");
-        
+
         // Create the driver with these options
         const driver = new Builder()
             .forBrowser("chrome")
             .setChromeOptions(options)
             .build();
-            
+
         return driver;
     } catch (error) {
         log(`Error initializing ChromeDriver: ${error.message}`, "ERROR");
-        
-        if (error.message.includes("ChromeDriver only supports Chrome version")) {
-            log("There is a version mismatch between ChromeDriver and your Chrome browser.", "ERROR");
-            log("Please install the correct version of ChromeDriver that matches your Chrome version.", "ERROR");
-            log("Run: npm install chromedriver@<version-number> --save", "ERROR");
+
+        if (
+            error.message.includes("ChromeDriver only supports Chrome version")
+        ) {
+            log(
+                "There is a version mismatch between ChromeDriver and your Chrome browser.",
+                "ERROR"
+            );
+            log(
+                "Please install the correct version of ChromeDriver that matches your Chrome version.",
+                "ERROR"
+            );
+            log(
+                "Run: npm install chromedriver@<version-number> --save",
+                "ERROR"
+            );
         }
-        
+
         throw error;
     }
 }
@@ -418,13 +429,14 @@ async function applyRecommendedJobs(driver) {
 
 // Main bot function
 export async function naukriBot() {
-    log("Starting Naukri automation bot");    // Get configuration from environment variables
+    log("Starting Naukri automation bot"); // Get configuration from environment variables
     const config = {
         username: process.env.NAUKRI_USERNAME,
         password: process.env.NAUKRI_PASSWORD,
         jobTitle: process.env.NAUKRI_JOB_TITLE || DEFAULT_JOB_TITLE,
         location: process.env.NAUKRI_LOCATION || "",
         headless: process.env.NAUKRI_HEADLESS === "true",
+        updateProfile: process.env.NAUKRI_UPDATE_PROFILE === "true",
     };
 
     if (!config.username || !config.password) {
@@ -436,12 +448,16 @@ export async function naukriBot() {
         `Configuration: Job Title: ${config.jobTitle}, Headless: ${config.headless}, No application limit`
     );
 
-    let driver;    try {
+    let driver;
+    try {
         driver = await initializeDriver(config.headless);
         await login(driver, config.username, config.password);
-        await updateResumeHeadline(driver);
-        await applyRecommendedJobs(driver);
-        log("Naukri automation completed successfully");
+
+        if (config.updateProfile) {
+            await updateResumeHeadline(driver);
+        } else {
+            await applyRecommendedJobs(driver);
+        }
     } catch (error) {
         log(`Error in Naukri automation: ${error.message}`, "ERROR");
         throw error;
@@ -454,5 +470,9 @@ export async function naukriBot() {
 }
 
 naukriBot()
-    .then(() => log("Naukri bot completed successfully"))
-    .catch((error) => log(`Naukri bot failed: ${error.message}`, "ERROR"));
+    .then(() => {
+        log("Naukri automation completed successfully");
+    })
+    .catch((error) => {
+        log(`Naukri automation failed: ${error.message}`, "ERROR");
+    });

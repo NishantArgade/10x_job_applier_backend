@@ -1,0 +1,5 @@
+# Laravel Scheduler Cron Entry
+# Add this to your server's crontab
+# This will run the Laravel scheduler every minute
+
+* * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
