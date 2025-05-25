@@ -1,0 +1,15 @@
+[2025-05-25T11:50:44.303Z] [INFO] Starting Naukri automation bot
+[2025-05-25T11:50:44.310Z] [INFO] Configuration: Job Title: PHP Developer, Headless: false, No application limit
+[2025-05-25T11:50:44.311Z] [INFO] Initializing Chrome WebDriver
+[2025-05-25T11:50:44.314Z] [INFO] Checking Chrome browser version...
+[2025-05-25T11:50:48.940Z] [INFO] Logging into Naukri
+[2025-05-25T11:50:53.796Z] [INFO] Updating resume headline
+[2025-05-25T11:51:00.617Z] [INFO] Resume headline updated successfully
+[2025-05-25T11:51:00.619Z] [INFO] Navigating to recommended jobs page
+[2025-05-25T11:51:07.211Z] [INFO] Loading job listings
+[2025-05-25T11:51:07.292Z] [INFO] Found 72 jobs, will apply to all of them
+[2025-05-25T11:51:07.477Z] [INFO] Processing job 1/72
+[2025-05-25T11:52:36.797Z] [INFO] Starting Naukri automation bot
+[2025-05-25T11:52:36.802Z] [INFO] Configuration: Job Title: PHP Developer, Headless: false, No application limit
+[2025-05-25T11:52:36.803Z] [INFO] Initializing Chrome WebDriver
+[2025-05-25T11:52:36.807Z] [INFO] Checking Chrome browser version...
