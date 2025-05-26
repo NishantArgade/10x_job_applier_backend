@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\User;
+use App\Models\Resume;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\ProfileController;
@@ -15,6 +17,31 @@ require __DIR__.'/auth.php';
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+// Sample CSV Download Route - publicly accessible
+Route::get('/api/v1/sample-jobs-csv', function() {
+    $filePath = public_path('sample_jobs.csv');
+    return response()->download($filePath, 'sample_jobs_template.csv', [
+        'Content-Type' => 'text/csv',
+    ]);
+});
+
+// Public Resume PDF Access Route (No Authentication Required)
+Route::get('/api/v1/public-resume/{uuid}', function($uuid) {
+    $resume = Resume::where('uuid', $uuid)->firstOrFail();
+    $path = storage_path('app/public/' . $resume->path);
+    
+    if (!file_exists($path)) {
+        abort(404, 'Resume file not found');
+    }
+    
+    return response()->file($path, [
+        'Content-Type' => $resume->mime_type,
+        'Content-Disposition' => 'inline; filename="' . $resume->file_name . '"',
+        'Cache-Control' => 'public, max-age=86400',
+        'Access-Control-Allow-Origin' => '*',
+    ]);
 });
 
 Route::middleware(['auth'])->prefix('api/v1')->group(function () {

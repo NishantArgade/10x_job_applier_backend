@@ -1,0 +1,4 @@
+name,company,email,phone,website,apply_for,followup_at,followup_after_days,followup_freq
+John Doe,ABC Corp,john@example.com,1234567890,www.abccorp.com,Software Engineer,2025-05-08,7,3
+Jane Smith,XYZ Ltd,jane@example.com,987654321,www.xyzltd.com,Product Manager,2025-05-09,7,3
+Alice Johnson,Innovate LLC,alice@example.com,1122334455,www.innovatellc.com,Data Analyst,2025-05-10,7,3

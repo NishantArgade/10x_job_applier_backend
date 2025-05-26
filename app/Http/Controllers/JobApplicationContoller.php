@@ -43,7 +43,6 @@ class JobApplicationContoller extends Controller
             'phone' => 'nullable|string',
             'website' => 'nullable|string',
             'apply_for' => 'required|string',
-            'apply_at' => 'required|date',
             'followup_after_days' => 'required|integer',
             'followup_freq' => 'required|integer',
         ]);
@@ -55,7 +54,7 @@ class JobApplicationContoller extends Controller
             'phone' => $validated['phone'],
             'website' => $validated['website'],
             'apply_for' => $validated['apply_for'],
-            'apply_at' => $validated['apply_at'],
+            'apply_at' =>  now(),
             'followup_after_days' => $validated['followup_after_days'],
             'followup_freq' => $validated['followup_freq'],
         ]);
@@ -78,15 +77,13 @@ class JobApplicationContoller extends Controller
     public function import(Request $request)
     {
         $validated = $request->validate([
-            'applications_csv' => 'required|mimes:csv,txt',
-            'template_id' => 'exists:templates,id',
-            'resume_id' => 'exists:resumes,id',
+            'applications_csv' => 'required|mimes:csv,txt'
         ]);
 
        
 
         Excel::import(
-            new ApplicationsImport($validated['template_id'], $validated['resume_id']),
+            new ApplicationsImport(),
             $validated['applications_csv']
         );
 
@@ -102,8 +99,7 @@ class JobApplicationContoller extends Controller
         $applications = Application::query()
             ->with(['template', 'resume'])
             ->where('status', 'pending')
-            ->whereDate('apply_at', '<=', now())
-            ->whereNull('processed_at')
+            // ->whereNull('processed_at')
             ->get();
 
         if ($applications->isEmpty()) {

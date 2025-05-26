@@ -11,7 +11,7 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 
 class ApplicationsImport implements ToModel, WithHeadingRow, WithUpserts, WithBatchInserts
 {
-    public function __construct(public int $templateId, public int $resumeId)
+    public function __construct()
     {
     }
 
@@ -29,13 +29,13 @@ class ApplicationsImport implements ToModel, WithHeadingRow, WithUpserts, WithBa
             'followup_at',
             'followup_after_days',
             'followup_freq',
-            'template_id',
-            'resume_id',
+            // 'template_id',
+            // 'resume_id',
         ];
 
         $row['user_id'] = auth()->id();
-        $row['template_id'] = $this->templateId;
-        $row['resume_id'] = $this->resumeId;
+        // $row['template_id'] = $this->templateId;
+        // $row['resume_id'] = $this->resumeId;
 
         if (blank($row['apply_at'])) {
             $row['apply_at'] = Carbon::now()->format('Y-m-d H:i:s');

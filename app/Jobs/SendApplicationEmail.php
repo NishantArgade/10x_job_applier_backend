@@ -37,10 +37,10 @@ class SendApplicationEmail implements ShouldQueue
                 [
                     'view' => 'emails.dynamic_template',
                     'data' => [
-                        'content' => $this->getTemplateBody($application->template->body),
+                        'content' => $this->getTemplateBody($application->template?->body ?? ""),
                     ],
-                    'subject' => $application->template->subject,
-                    'attachmentPath' => storage_path($application->resume->path),
+                    'subject' => $application->template?->subject,
+                    'attachmentPath' => storage_path($application->resume?->path),
                 ]
             );
 
@@ -48,10 +48,10 @@ class SendApplicationEmail implements ShouldQueue
                 Log::channel('email')->info(sprintf(
                     "Email Content:\nFrom: %s\nSubject: %s\nTo: %s\nContent: %s\nAttachment: %s",
                     config('mail.from.address'),
-                    $application->template->subject,
+                    $application->template?->subject,
                     $application->email,
-                    $this->getTemplateBody($application->template->body),
-                    storage_path($application->resume->path)
+                    $this->getTemplateBody($application->template?->body),
+                    storage_path($application->resume?->path)
                 ));
 
                 Log::channel('email')->info(" ");
