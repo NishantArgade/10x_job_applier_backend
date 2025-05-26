@@ -36,9 +36,12 @@ Route::get('/api/v1/public-resume/{uuid}', function($uuid) {
         abort(404, 'Resume file not found');
     }
     
+    // Use original filename if available, otherwise use the stored filename
+    $displayFilename = $resume->original_filename ?? $resume->file_name;
+    
     return response()->file($path, [
         'Content-Type' => $resume->mime_type,
-        'Content-Disposition' => 'inline; filename="' . $resume->file_name . '"',
+        'Content-Disposition' => 'inline; filename="' . $displayFilename . '"',
         'Cache-Control' => 'public, max-age=86400',
         'Access-Control-Allow-Origin' => '*',
     ]);

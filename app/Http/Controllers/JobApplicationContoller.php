@@ -77,13 +77,13 @@ class JobApplicationContoller extends Controller
     public function import(Request $request)
     {
         $validated = $request->validate([
-            'applications_csv' => 'required|mimes:csv,txt'
+            'applications_csv' => 'required|mimes:csv,txt',
+            'template_id' => 'required|exists:templates,id',
+            'resume_id' => 'required|exists:resumes,id',
         ]);
 
-       
-
         Excel::import(
-            new ApplicationsImport(),
+            new ApplicationsImport($validated['template_id'], $validated['resume_id']),
             $validated['applications_csv']
         );
 

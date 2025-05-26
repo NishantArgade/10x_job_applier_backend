@@ -26,22 +26,23 @@ class ResumeController extends Controller
             'resume' => 'required|file|mimes:pdf|max:10240',
             'is_active' => 'nullable|boolean',
         ]);
-
         $file = $validated['resume'];
         $uuid = Str::uuid();
+        $originalFilename = $file->getClientOriginalName();
         $fileName = $uuid.'.'.$file->getClientOriginalExtension();
-        
+
         // Store in public disk instead of upload disk for public access
         $filePath = $file->storeAs('resumes', $fileName, 'public');
 
         $resume = Resume::create([
             'uuid' => $uuid,
             'file_name' => $fileName,
+            'original_filename' => $originalFilename,
             'mime_type' => $file->getMimeType(),
             'path' => $filePath,
             'is_active' => $validated['is_active'] ?? false,
             'size' => $file->getSize(),
-            'user_id' => auth()->id() 
+            'user_id' => auth()->id()
         ]);
 
         // Add download URL to response
@@ -78,7 +79,7 @@ class ResumeController extends Controller
         if (Storage::disk('public')->exists($resume->path)) {
             Storage::disk('public')->delete($resume->path);
         }
-        
+
         $resume->delete();
 
         return response()->json([
@@ -94,6 +95,6 @@ class ResumeController extends Controller
      */
     private function getPublicUrl(Resume $resume)
     {
-        return url('/api/v1/public-resume/' . $resume->uuid);
+        return url('/api/v1/public-resume/'.$resume->uuid);
     }
 }
