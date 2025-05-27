@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Application;
+use Auth;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use App\Mail\JobApplicationMail;
@@ -37,7 +38,7 @@ class SendApplicationEmail implements ShouldQueue
                 [
                     'view' => 'emails.dynamic_template',
                     'data' => [
-                        'content' => $this->getTemplateBody($application->template?->body ?? ""),
+                        'content' => $this->getTemplateBody($application),
                     ],
                     'subject' => $application->template?->subject,
                     'attachmentPath' => storage_path($application->resume?->path),
@@ -50,7 +51,7 @@ class SendApplicationEmail implements ShouldQueue
                     config('mail.from.address'),
                     $application->template?->subject,
                     $application->email,
-                    $this->getTemplateBody($application->template?->body),
+                    $this->getTemplateBody($application),
                     storage_path($application->resume?->path)
                 ));
 
@@ -71,19 +72,25 @@ class SendApplicationEmail implements ShouldQueue
             throw $e;
         }
     }
-
-    private function getTemplateBody($body)
+    private function getTemplateBody($application)
     {
+        $body = $application->template?->body ?? '';
+        $hrName = $application->name ?? '';
+        $companyName = $application->company ?? '';
+        $jobTitle = $application->apply_for ?? '';
+
         $variables = [
-            '{{name}}' => 'John Doe',
-            '{{job_title}}' => 'Software Developer',
-            '{{company_name}}' => 'Your Company Name',
+            '{{name}}' => $hrName,
+            '{{job_title}}' => $jobTitle,
+            '{{company_name}}' => $companyName,
         ];
 
-        return str_replace(
+        $body = str_replace(
             array_keys($variables),
             array_values($variables),
             $body
         );
+
+        return $body;
     }
 }

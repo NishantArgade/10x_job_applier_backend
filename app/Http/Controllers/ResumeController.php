@@ -23,15 +23,14 @@ class ResumeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'resume' => 'required|file|mimes:pdf|max:10240',
-            'is_active' => 'nullable|boolean',
+            'resume' => 'required|file|mimes:pdf|max:10240'
         ]);
+
         $file = $validated['resume'];
         $uuid = Str::uuid();
         $originalFilename = $file->getClientOriginalName();
         $fileName = $uuid.'.'.$file->getClientOriginalExtension();
 
-        // Store in public disk instead of upload disk for public access
         $filePath = $file->storeAs('resumes', $fileName, 'public');
 
         $resume = Resume::create([
@@ -40,12 +39,10 @@ class ResumeController extends Controller
             'original_filename' => $originalFilename,
             'mime_type' => $file->getMimeType(),
             'path' => $filePath,
-            'is_active' => $validated['is_active'] ?? false,
             'size' => $file->getSize(),
             'user_id' => auth()->id()
         ]);
 
-        // Add download URL to response
         $resume->download_url = $this->getPublicUrl($resume);
 
         return response()->json([
@@ -54,28 +51,8 @@ class ResumeController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, Resume $resume)
-    {
-        $validated = $request->validate([
-            'is_active' => 'nullable|boolean',
-        ]);
-
-        $resume->update([
-            'is_active' => $validated['is_active'] ?? false,
-        ]);
-
-        // Add download URL to response
-        $resume->download_url = $this->getPublicUrl($resume);
-
-        return response()->json([
-            'message' => 'Resume updated successfully!',
-            'resume' => $resume,
-        ]);
-    }
-
     public function destroy(Resume $resume)
     {
-        // Delete the actual file from storage
         if (Storage::disk('public')->exists($resume->path)) {
             Storage::disk('public')->delete($resume->path);
         }
@@ -87,12 +64,6 @@ class ResumeController extends Controller
         ]);
     }
 
-    /**
-     * Get the public accessible URL for a resume
-     *
-     * @param Resume $resume
-     * @return string
-     */
     private function getPublicUrl(Resume $resume)
     {
         return url('/api/v1/public-resume/'.$resume->uuid);

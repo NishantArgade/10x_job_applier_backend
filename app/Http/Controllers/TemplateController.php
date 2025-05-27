@@ -22,16 +22,14 @@ class TemplateController extends Controller
         $validated = $request->validate([
             'name' => 'required|string',
             'subject' => 'nullable|string',
-            'body' => 'required|string',
-            'is_active' => 'nullable|boolean',
+            'body' => 'required|string'
         ]);
 
         $payload = [
             'name' => $validated['name'],
-            'body' => $validated['body'],
+            'body' => $this->cleanTailwindStyles($validated['body']),
             'user_id' => auth()->id(),
-            ...(isset($validated['subject'])) ? ['subject' => $validated['subject']] : [],
-            ...(isset($validated['is_active'])) ? ['is_active' => $validated['is_active']] : []
+            ...(isset($validated['subject'])) ? ['subject' => $validated['subject']] : []
         ];
 
         $template = Template::create($payload);
@@ -47,15 +45,13 @@ class TemplateController extends Controller
         $validated = $request->validate([
             'name' => 'required|string',
             'subject' => 'nullable|string',
-            'body' => 'required|string',
-            'is_active' => 'nullable|boolean',
+            'body' => 'required|string'
         ]);
 
         $payload = [
             'name' => $validated['name'],
-            'body' => $validated['body'],
-            ...(isset($validated['subject'])) ? ['subject' => $validated['subject']] : [],
-            ...(isset($validated['is_active'])) ? ['is_active' => $validated['is_active']] : []
+            'body' => $this->cleanTailwindStyles($validated['body']),
+            ...(isset($validated['subject'])) ? ['subject' => $validated['subject']] : []
         ];
 
         $template->update($payload);
@@ -74,4 +70,10 @@ class TemplateController extends Controller
             'message' => 'Template deleted successfully'
         ]);
     }
+
+    private function cleanTailwindStyles($html)
+    {
+        return preg_replace('/style="[^"]*--tw-[^"]*"/i', '', $html);
+    }
+
 }
