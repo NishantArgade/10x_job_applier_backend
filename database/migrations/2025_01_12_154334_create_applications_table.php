@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('followup_after_days')->default(3);
             $table->integer('followup_freq')->default(3);
             $table->enum('status', ['pending', 'sent', 'failed'])->default('pending');
+            $table->string('source')->nullable();
             $table->boolean('recruitor_reply')->default(false);
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('template_id')->nullable()->constrained()->nullOnDelete();

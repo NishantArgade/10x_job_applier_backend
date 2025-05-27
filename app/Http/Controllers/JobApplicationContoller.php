@@ -18,11 +18,26 @@ class JobApplicationContoller extends Controller
 
     public function index(Request $request)
     {
+        //@todo: add spatie filter
+        
         $applications = Application::query()
             ->with(['template', 'resume'])
-            ->get();
+            ->paginate(10);
 
-        return $applications;
+        return $applications->through(function ($application) {
+            return [
+                'id' => $application->id,
+                'jobTitle' => $application->apply_for,
+                'company' => $application->company,
+                'location' => $application->location ?? 'N/A',
+                'applicationDate' => $application->apply_at->format('Y-m-d'),
+                'status' => $application->status,
+                'source' => $application->source ?? 'N/A',
+                'resume' => $application->resume?->download_url ?? null,
+                'resumeName' => $application->resume?->original_filename ?? 'N/A',
+                'template' => $application->template?->name ?? 'N/A',
+            ];
+        });
     }
 
     // method: single, edit, delete
@@ -54,7 +69,7 @@ class JobApplicationContoller extends Controller
             'phone' => $validated['phone'],
             'website' => $validated['website'],
             'apply_for' => $validated['apply_for'],
-            'apply_at' =>  now(),
+            'apply_at' => now(),
             'followup_after_days' => $validated['followup_after_days'],
             'followup_freq' => $validated['followup_freq'],
         ]);
