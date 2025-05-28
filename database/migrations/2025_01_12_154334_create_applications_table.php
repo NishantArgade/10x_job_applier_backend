@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('email')->nullable(false);
             $table->string('phone')->nullable();
             $table->string('website')->nullable();
+            $table->string('location')->nullable();
             $table->string('apply_for')->nullable();
             $table->dateTime('apply_at')->default(now());
             $table->dateTime('followup_at')->default(now()->addDays(3));
