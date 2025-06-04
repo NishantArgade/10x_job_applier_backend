@@ -1,59 +1,50 @@
 import { Builder, By, Key, until } from "selenium-webdriver";
 import "chromedriver";
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
-// Constants
+dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const LOG_DIR = path.join(__dirname, "..", "storage", "logs");
+const PID_DIR = path.join(__dirname, "..", "storage", "app");
 const NAUKRI_LOGIN_URL = "https://www.naukri.com/nlogin/login";
-const NAUKRI_PROFILE_URL =
-    "https://www.naukri.com/mnjuser/profile?action=modalOpen";
-const NAUKRI_JOBS_URL = "https://www.naukri.com/mnjuser/recommendedjobs";
-const DEFAULT_JOB_TITLE = "Software Developer";
-const DEFAULT_RESUME_HEADLINE =
-    "Full Stack Developer | React, Node.js | Open to Remote | Immediate Joiner";
 
-dotenv.config();
-
-// Setup logging
-const logDir = path.join(__dirname, "..", "storage", "logs");
-if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
-}
+[LOG_DIR, PID_DIR].forEach((dir) => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
 
 function getLogFile(botType) {
     return path.join(
-        logDir,
+        LOG_DIR,
         `naukri-${botType}-${new Date().toISOString().split("T")[0]}.log`
     );
 }
 
 function createLogger(botType) {
     const logFile = getLogFile(botType);
-    
+
     return function log(message, level = "INFO") {
         const timestamp = new Date().toISOString();
         const logPrefix = `[${timestamp}] [${level}] [${botType}]`;
         const logMessage = `${logPrefix} ${message}\n`;
 
-        // Add color to console output based on level
-        let consoleMessage;
-        switch (level) {
-            case "ERROR":
-                consoleMessage = `\x1b[31m${logPrefix}\x1b[0m ${message}`;
-                break;
-            case "WARN":
-                consoleMessage = `\x1b[33m${logPrefix}\x1b[0m ${message}`;
-                break;
-            default:
-                consoleMessage = `\x1b[36m${logPrefix}\x1b[0m ${message}`;
-        }
+        const colors = {
+            ERROR: "\x1b[31m",
+            WARN: "\x1b[33m",
+            INFO: "\x1b[36m",
+        };
+        const resetColor = "\x1b[0m";
+        const color = colors[level] || colors.INFO;
 
-        console.log(consoleMessage);
+        console.log(`${color}${logPrefix}${resetColor} ${message}`);
 
         try {
             fs.appendFileSync(logFile, logMessage);
@@ -63,17 +54,35 @@ function createLogger(botType) {
     };
 }
 
-// Initialize WebDriver
 async function initializeDriver(headless = false, log) {
     log("Initializing Chrome WebDriver");
 
     try {
-        // Use the specific ChromeDriver version based on your installed Chrome
         const chrome = await import("selenium-webdriver/chrome.js");
         const options = new chrome.Options();
 
+        // ✅ Create temporary profile directory
+        const tempProfilePath = path.join(
+            os.tmpdir(),
+            `naukri-chrome-profile-${Date.now()}`
+        );
+        options.addArguments(`--user-data-dir=${tempProfilePath}`);
+        options.addArguments("--incognito");
+
+        // ✅ Disable password manager & services
+        options.addArguments("--disable-save-password-bubble");
+        options.addArguments("--disable-credentials-enable-service");
+        options.addArguments("--disable-password-manager-reauthentication");
+        options.addArguments("--disable-autofill-keyboard-accessory-view");
+        options.addArguments("--disable-notifications");
+
+        options.setUserPreferences({
+            credentials_enable_service: false,
+            "profile.password_manager_enabled": false,
+        });
+
         if (headless) {
-            options.addArguments("--headless=new"); // Use new headless mode
+            options.addArguments("--headless=new");
             options.addArguments("--disable-gpu");
         }
 
@@ -81,10 +90,6 @@ async function initializeDriver(headless = false, log) {
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--window-size=800,600");
 
-        // Try to get Chrome version
-        log("Checking Chrome browser version...");
-
-        // Create the driver with these options
         const driver = new Builder()
             .forBrowser("chrome")
             .setChromeOptions(options)
@@ -98,15 +103,11 @@ async function initializeDriver(headless = false, log) {
             error.message.includes("ChromeDriver only supports Chrome version")
         ) {
             log(
-                "There is a version mismatch between ChromeDriver and your Chrome browser.",
+                "Version mismatch between ChromeDriver and Chrome browser",
                 "ERROR"
             );
             log(
-                "Please install the correct version of ChromeDriver that matches your Chrome version.",
-                "ERROR"
-            );
-            log(
-                "Run: npm install chromedriver@<version-number> --save",
+                "Install correct ChromeDriver version: npm install chromedriver@<version>",
                 "ERROR"
             );
         }
@@ -115,9 +116,16 @@ async function initializeDriver(headless = false, log) {
     }
 }
 
-// Login to Naukri
-async function login(driver, username, password, log) {
+async function login(driver, log) {
     log("Logging into Naukri");
+
+    const username = process.env.NAUKRI_USERNAME;
+    const password = process.env.NAUKRI_PASSWORD;
+
+    if (!username || !password) {
+        log("Naukri credentials not found in environment variables", "ERROR");
+        throw new Error("Missing Naukri credentials");
+    }
 
     await driver.get(NAUKRI_LOGIN_URL);
 
@@ -136,7 +144,6 @@ async function login(driver, username, password, log) {
     }
 }
 
-// Helper function for scrolling and clicking elements
 async function scrollAndClick(driver, element) {
     await driver.executeScript(
         "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
@@ -147,7 +154,6 @@ async function scrollAndClick(driver, element) {
     return true;
 }
 
-// Handle tab switching
 async function switchToTab(driver, tabIndex = 1) {
     const windows = await driver.getAllWindowHandles();
     if (windows.length > tabIndex) {
@@ -157,7 +163,6 @@ async function switchToTab(driver, tabIndex = 1) {
     return false;
 }
 
-// Close current tab and switch back to main window
 async function closeTabAndSwitchToMain(driver) {
     const windows = await driver.getAllWindowHandles();
     if (windows.length > 1) {
@@ -166,84 +171,42 @@ async function closeTabAndSwitchToMain(driver) {
     }
 }
 
-// Handle graceful shutdown
 function setupShutdownHandlers(log) {
-    process.on('SIGINT', async () => {
-        log("Received SIGINT signal, shutting down gracefully", "INFO");
+    const handleShutdown = (signal) => {
+        log(`Received ${signal} signal, shutting down gracefully`, "INFO");
         process.exit(0);
-    });
+    };
 
-    process.on('SIGTERM', async () => {
-        log("Received SIGTERM signal, shutting down gracefully", "INFO");
-        process.exit(0);
-    });
+    process.on("SIGINT", () => handleShutdown("SIGINT"));
+    process.on("SIGTERM", () => handleShutdown("SIGTERM"));
 }
 
-// Write PID to file
 function writePidFile(botType) {
+    const pidFilePath = path.join(PID_DIR, `naukri_${botType}_bot.pid`);
+
     try {
-        // Use an absolute path to ensure path resolution works properly across systems
-        const pidFilePath = path.resolve(__dirname, '..', 'storage', 'app', `naukri_${botType}_bot.pid`);
-        console.log(`Writing PID ${process.pid} to file: ${pidFilePath}`);
-        
-        // Create directory if it doesn't exist
-        const pidDir = path.dirname(pidFilePath);
-        if (!fs.existsSync(pidDir)) {
-            fs.mkdirSync(pidDir, { recursive: true });
-            console.log(`Created directory: ${pidDir}`);
-        }
-        
-        // Write PID to file with explicit encoding
-        fs.writeFileSync(pidFilePath, process.pid.toString(), 'utf8');
-        
-        // Verify the file was created
-        if (fs.existsSync(pidFilePath)) {
-            const readPid = fs.readFileSync(pidFilePath, 'utf8');
-            console.log(`PID file written successfully and verified. PID: ${readPid}`);
-        } else {
-            console.error('Failed to verify PID file was created.');
-        }
-        
-        // Also write the PID to a Windows-friendly location as backup
-        const backupPidPath = path.join(__dirname, `naukri_${botType}_bot.pid`);
-        fs.writeFileSync(backupPidPath, process.pid.toString(), 'utf8');
-        console.log(`Backup PID file written to: ${backupPidPath}`);
-        
+        fs.writeFileSync(pidFilePath, process.pid.toString(), "utf8");
         return pidFilePath;
     } catch (error) {
         console.error(`Failed to write PID file: ${error.message}`);
-        console.error(error.stack);
-        
-        // Try to write to the bot's own directory as a fallback
+
         try {
-            const fallbackPath = path.join(__dirname, `naukri_${botType}_bot.pid`);
-            fs.writeFileSync(fallbackPath, process.pid.toString(), 'utf8');
-            console.log(`Fallback PID file written to: ${fallbackPath}`);
+            const fallbackPath = path.join(
+                __dirname,
+                `naukri_${botType}_bot.pid`
+            );
+            fs.writeFileSync(fallbackPath, process.pid.toString(), "utf8");
             return fallbackPath;
         } catch (fallbackError) {
-            console.error(`Failed to write fallback PID file: ${fallbackError.message}`);
+            console.error(
+                `Failed to write fallback PID file: ${fallbackError.message}`
+            );
             return null;
         }
     }
 }
 
-// Get configuration from environment variables
-function getConfig() {
-    return {
-        username: process.env.NAUKRI_USERNAME,
-        password: process.env.NAUKRI_PASSWORD,
-        jobTitle: process.env.NAUKRI_JOB_TITLE || DEFAULT_JOB_TITLE,
-        location: process.env.NAUKRI_LOCATION || "",
-        headless: process.env.NAUKRI_HEADLESS === "true",
-    };
-}
-
 export {
-    NAUKRI_LOGIN_URL,
-    NAUKRI_PROFILE_URL,
-    NAUKRI_JOBS_URL,
-    DEFAULT_JOB_TITLE,
-    DEFAULT_RESUME_HEADLINE,
     createLogger,
     initializeDriver,
     login,
@@ -252,5 +215,4 @@ export {
     closeTabAndSwitchToMain,
     setupShutdownHandlers,
     writePidFile,
-    getConfig
 };

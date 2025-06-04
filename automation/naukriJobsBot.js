@@ -1,6 +1,5 @@
 import { By, until } from "selenium-webdriver";
 import {
-    NAUKRI_JOBS_URL,
     createLogger,
     initializeDriver,
     login,
@@ -13,6 +12,9 @@ import {
 import dotenv from "dotenv";
 
 dotenv.config();
+
+const NAUKRI_JOBS_URL = "https://www.naukri.com/mnjuser/recommendedjobs";
+
 const log = createLogger("jobs");
 
 async function applyForJob(driver, jobElement, jobIndex, totalJobs) {
@@ -23,7 +25,6 @@ async function applyForJob(driver, jobElement, jobIndex, totalJobs) {
         await driver.sleep(2000);
         const tabSwitched = await switchToTab(driver);
 
-        // Check for chatbot or external job indicators
         const chatbotExists = await driver.findElements(By.id("_mtdn7v2eyChatbotContainer")).then(elements => elements.length > 0);
         if (chatbotExists) {
             log(`Skipping job ${jobIndex + 1}: Contains chatbot container`, "WARN");
@@ -40,17 +41,12 @@ async function applyForJob(driver, jobElement, jobIndex, totalJobs) {
             return false;
         }
 
-        // Try to apply
         try {
-            const applyBtn = await driver.wait(
-                until.elementLocated(By.xpath("//button[contains(text(), 'Apply')]")), 
-                5000
-            );
+            const applyBtn = await driver.wait(until.elementLocated(By.xpath("//button[contains(text(), 'Apply')]")), 5000);
             await driver.wait(until.elementIsVisible(applyBtn), 3000);
             await scrollAndClick(driver, applyBtn);
             log(`Applied to job ${jobIndex + 1}`);
             
-            // Handle popup if needed
             await driver.sleep(2000);
             const postApplyChatbot = await driver.findElements(By.id("_mtdn7v2eyChatbotContainer"));
             if (postApplyChatbot.length > 0) {
@@ -66,7 +62,8 @@ async function applyForJob(driver, jobElement, jobIndex, totalJobs) {
         }
 
         if (tabSwitched) await closeTabAndSwitchToMain(driver);
-        return true;    } catch (error) {
+        return true;
+    } catch (error) {
         log(`Failed to apply to job ${jobIndex + 1}: ${error.message}`, "WARN");
         try {
             await closeTabAndSwitchToMain(driver);
@@ -96,7 +93,6 @@ async function applyRecommendedJobs(driver) {
                 break;
             }
 
-            // Filter out complex jobs
             const jobItem = refreshedJobArticles[i];
             const jobTitle = await jobItem.findElement(By.css(".title")).getText().catch(() => "");
             const jobDescription = await jobItem.findElement(By.css(".job-description")).getText().catch(() => "");
@@ -127,14 +123,7 @@ async function applyRecommendedJobs(driver) {
 async function naukriJobsBot() {
     log("Starting Naukri job application bot");
     
-    const username = process.env.NAUKRI_USERNAME;
-    const password = process.env.NAUKRI_PASSWORD;
     const headless = process.env.NAUKRI_HEADLESS === "true";
-    
-    if (!username || !password) {
-        log("Naukri credentials not found in environment variables", "ERROR");
-        throw new Error("Missing Naukri credentials");
-    }
 
     log(`Running with headless mode: ${headless}`);
     
@@ -149,7 +138,7 @@ async function naukriJobsBot() {
     let driver;
     try {
         driver = await initializeDriver(headless, log);
-        await login(driver, username, password, log);
+        await login(driver, log);
         await applyRecommendedJobs(driver);
         log("Job applications completed successfully");
     } catch (error) {

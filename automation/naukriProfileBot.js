@@ -1,22 +1,25 @@
 import { By, until } from "selenium-webdriver";
 import {
-    NAUKRI_PROFILE_URL,
-    DEFAULT_RESUME_HEADLINE,
     createLogger,
     initializeDriver,
     login,
     scrollAndClick,
     setupShutdownHandlers,
-    writePidFile
+    writePidFile,
 } from "./naukriUtils.js";
 import dotenv from "dotenv";
 
-// Load environment variables
 dotenv.config();
+
+const NAUKRI_PROFILE_URL = "https://www.naukri.com/mnjuser/profile?action=modalOpen";
+const DEFAULT_RESUME_HEADLINE = "Full Stack Developer | React, Node.js | Open to Remote | Immediate Joiner";
 
 const log = createLogger("profile");
 
-async function updateResumeHeadline(driver, headline = DEFAULT_RESUME_HEADLINE) {
+async function updateResumeHeadline(
+    driver,
+    headline = DEFAULT_RESUME_HEADLINE
+) {
     log("Updating resume headline");
     await driver.get(NAUKRI_PROFILE_URL);
 
@@ -62,17 +65,10 @@ async function updateResumeHeadline(driver, headline = DEFAULT_RESUME_HEADLINE) 
 async function naukriProfileBot() {
     log("Starting Naukri profile update bot");
 
-    const username = process.env.NAUKRI_USERNAME;
-    const password = process.env.NAUKRI_PASSWORD;
     const headless = process.env.NAUKRI_HEADLESS === "true";
 
-    if (!username || !password) {
-        log("Naukri credentials not found in environment variables", "ERROR");
-        throw new Error("Missing Naukri credentials");
-    }
-
     log(`Running with headless mode: ${headless}`);
-    
+
     try {
         writePidFile("profile");
     } catch (error) {
@@ -84,7 +80,7 @@ async function naukriProfileBot() {
     let driver;
     try {
         driver = await initializeDriver(headless, log);
-        await login(driver, username, password, log);
+        await login(driver, log);
         await updateResumeHeadline(driver);
         log("Profile update completed successfully");
     } catch (error) {
