@@ -1,4 +1,6 @@
 import { By, until } from "selenium-webdriver";
+import fs from "fs";
+import path from "path";
 import {
     createLogger,
     initializeDriver,
@@ -142,11 +144,11 @@ async function naukriJobsBot() {
         log(`Failed to write PID file: ${error.message}`, "ERROR");
     }
     
-    setupShutdownHandlers(log);
-    
     let driver;
     try {
         driver = await initializeDriver(headless, log);
+        setupShutdownHandlers(log, driver, "jobs");
+        
         await login(driver, log);
         await applyRecommendedJobs(driver);
         log("Job applications completed successfully");
@@ -157,6 +159,16 @@ async function naukriJobsBot() {
         if (driver) {
             log("Closing browser");
             await driver.quit();
+        }
+        
+        // Clean up PID file
+        try {
+            const pidFilePath = path.join(__dirname, "..", "storage", "app", "naukri_jobs_bot.pid");
+            if (fs.existsSync(pidFilePath)) {
+                fs.unlinkSync(pidFilePath);
+            }
+        } catch (error) {
+            log(`Error cleaning PID file: ${error.message}`, "WARN");
         }
     }
 }

@@ -225,14 +225,48 @@ async function batchProcessElements(driver, elements, processor, concurrency = 3
     return results;
 }
 
-function setupShutdownHandlers(log) {
-    const handleShutdown = (signal) => {
+function setupShutdownHandlers(log, driver = null, botType = null) {
+    const handleShutdown = async (signal) => {
         log(`Received ${signal} signal, shutting down gracefully`, "INFO");
-        process.exit(0);
+        
+        try {
+            // Close browser if it exists
+            if (driver) {
+                log("Closing browser...", "INFO");
+                await driver.quit().catch(err => 
+                    log(`Error closing browser: ${err.message}`, "WARN")
+                );
+            }
+            
+            // Clean up PID file
+            if (botType) {
+                const pidFilePath = path.join(PID_DIR, `naukri_${botType}_bot.pid`);
+                try {
+                    if (fs.existsSync(pidFilePath)) {
+                        fs.unlinkSync(pidFilePath);
+                        log(`Cleaned up PID file: ${pidFilePath}`, "INFO");
+                    }
+                } catch (error) {
+                    log(`Error cleaning PID file: ${error.message}`, "WARN");
+                }
+            }
+            
+            log("Shutdown complete", "INFO");
+        } catch (error) {
+            log(`Error during shutdown: ${error.message}`, "ERROR");
+        } finally {
+            process.exit(0);
+        }
     };
 
     process.on("SIGINT", () => handleShutdown("SIGINT"));
     process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+    process.on("SIGKILL", () => handleShutdown("SIGKILL"));
+    
+    // Handle Windows-specific signals
+    if (process.platform === "win32") {
+        process.on("SIGBREAK", () => handleShutdown("SIGBREAK"));
+    }
 }
 
 function writePidFile(botType) {

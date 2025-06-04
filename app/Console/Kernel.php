@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Run naukriBot every hour
-        $schedule->command('naukri:bot')->hourly();
+        // $schedule->command('naukri:bot')->hourly();
     }
 
     /**

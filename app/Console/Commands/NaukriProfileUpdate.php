@@ -6,19 +6,19 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 
-class NaukriApplyJobs extends Command
+class NaukriProfileUpdate extends Command
 {
-    protected $signature = 'naukri:apply-jobs';
-    protected $description = 'Apply for recommended jobs on Naukri';
+    protected $signature = 'naukri:profile-update';
+    protected $description = 'Update Naukri profile with latest headline.';
 
     public function handle()
     {
         // Storage::put('naukri_bot_pid.txt', getmypid());
 
-        $this->info('Starting Naukri job application process...');
+        $this->info('Starting Naukri profile update process...');
 
         try {
-            $scriptPath = base_path('automation/naukriJobsBot.js');
+            $scriptPath = base_path('automation/naukriProfileBot.js');
 
             $process = new Process(['node', $scriptPath]);
             $process->setTimeout(3600);
@@ -32,14 +32,14 @@ class NaukriApplyJobs extends Command
             });
 
             if ($process->isSuccessful()) {
-                $this->info('Job application process completed successfully.');
+                $this->info('Naukri profile update process completed successfully.');
                 return Command::SUCCESS;
             } else {
-                $this->error('Job application process failed: '.$process->getErrorOutput());
+                $this->error('Naukri profile update error: '.$process->getErrorOutput());
                 return Command::FAILURE;
             }
         } catch (\Exception $e) {
-            $this->error('Error applying for jobs: '.$e->getMessage());
+            $this->error('Error while updating profile: '.$e->getMessage());
             return Command::FAILURE;
         }
     }
