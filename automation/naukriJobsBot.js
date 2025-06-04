@@ -6,6 +6,7 @@ import {
     scrollAndClick,
     switchToTab,
     closeTabAndSwitchToMain,
+    elementExists,
     setupShutdownHandlers,
     writePidFile
 } from "./naukriUtils.js";
@@ -22,19 +23,23 @@ async function applyForJob(driver, jobElement, jobIndex, totalJobs) {
 
     try {
         await scrollAndClick(driver, jobElement);
-        await driver.sleep(2000);
+        await driver.sleep(800); // Reduced from 2000ms
         const tabSwitched = await switchToTab(driver);
 
-        const chatbotExists = await driver.findElements(By.id("_mtdn7v2eyChatbotContainer")).then(elements => elements.length > 0);
+        // Parallel checks for faster processing
+        const [chatbotExists, externalLinks] = await Promise.all([
+            driver.findElements(By.id("_mtdn7v2eyChatbotContainer")).then(elements => elements.length > 0),
+            driver.findElements(
+                By.xpath("//a[contains(text(), 'Apply on company website') or contains(@class, 'external-apply')]")
+            ).then(elements => elements.length > 0)
+        ]);
+
         if (chatbotExists) {
             log(`Skipping job ${jobIndex + 1}: Contains chatbot container`, "WARN");
             if (tabSwitched) await closeTabAndSwitchToMain(driver);
             return false;
         }
 
-        const externalLinks = await driver.findElements(
-            By.xpath("//a[contains(text(), 'Apply on company website') or contains(@class, 'external-apply')]")
-        ).then(elements => elements.length > 0);
         if (externalLinks) {
             log(`Skipping job ${jobIndex + 1}: External job application`, "WARN");
             if (tabSwitched) await closeTabAndSwitchToMain(driver);
@@ -42,12 +47,12 @@ async function applyForJob(driver, jobElement, jobIndex, totalJobs) {
         }
 
         try {
-            const applyBtn = await driver.wait(until.elementLocated(By.xpath("//button[contains(text(), 'Apply')]")), 5000);
-            await driver.wait(until.elementIsVisible(applyBtn), 3000);
+            const applyBtn = await driver.wait(until.elementLocated(By.xpath("//button[contains(text(), 'Apply')]")), 4000);
+            await driver.wait(until.elementIsVisible(applyBtn), 2000);
             await scrollAndClick(driver, applyBtn);
             log(`Applied to job ${jobIndex + 1}`);
             
-            await driver.sleep(2000);
+            await driver.sleep(1000); // Reduced from 2000ms
             const postApplyChatbot = await driver.findElements(By.id("_mtdn7v2eyChatbotContainer"));
             if (postApplyChatbot.length > 0) {
                 const closeButtons = await driver.findElements(By.css("[aria-label='close']"));
@@ -75,15 +80,15 @@ async function applyForJob(driver, jobElement, jobIndex, totalJobs) {
 async function applyRecommendedJobs(driver) {
     log("Navigating to recommended jobs page");
     await driver.get(NAUKRI_JOBS_URL);
-    await driver.sleep(5000);
+    await driver.sleep(2000); // Reduced from 5000ms
 
     try {
         log("Loading job listings");
-        await driver.wait(until.elementLocated(By.css("article.jobTuple")), 15000);
+        await driver.wait(until.elementLocated(By.css("article.jobTuple")), 10000); // Reduced timeout
         const jobArticles = await driver.findElements(By.css("article.jobTuple"));
 
-        const jobsToApply = jobArticles.length;
-        log(`Found ${jobsToApply} jobs, will apply to suitable ones`);
+        const jobsToApply = Math.min(jobArticles.length, 20); // Limit to prevent excessive runtime
+        log(`Found ${jobArticles.length} jobs, will apply to first ${jobsToApply} suitable ones`);
 
         let appliedCount = 0;
         for (let i = 0; i < jobsToApply; i++) {
@@ -94,10 +99,14 @@ async function applyRecommendedJobs(driver) {
             }
 
             const jobItem = refreshedJobArticles[i];
-            const jobTitle = await jobItem.findElement(By.css(".title")).getText().catch(() => "");
-            const jobDescription = await jobItem.findElement(By.css(".job-description")).getText().catch(() => "");
             
-            const complexJobTerms = ["senior", "lead", "architect", "manager"];
+            // Fast job filtering using parallel text extraction
+            const [jobTitle, jobDescription] = await Promise.all([
+                jobItem.findElement(By.css(".title")).getText().catch(() => ""),
+                jobItem.findElement(By.css(".job-description")).getText().catch(() => "")
+            ]);
+            
+            const complexJobTerms = ["senior", "lead", "architect", "manager", "principal"];
             const isComplexJob = complexJobTerms.some(term => 
                 jobTitle.toLowerCase().includes(term) || jobDescription.toLowerCase().includes(term)
             );
@@ -109,7 +118,7 @@ async function applyRecommendedJobs(driver) {
 
             const success = await applyForJob(driver, refreshedJobArticles[i], i, jobsToApply);
             if (success) appliedCount++;
-            await driver.sleep(1000);
+            await driver.sleep(500); // Reduced inter-job delay
         }
 
         log(`Successfully applied to ${appliedCount} jobs`);

@@ -69,6 +69,22 @@ async function initializeDriver(headless = false, log) {
         options.addArguments(`--user-data-dir=${tempProfilePath}`);
         options.addArguments("--incognito");
 
+        // ✅ Speed optimizations
+        options.addArguments("--disable-blink-features=AutomationControlled");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--disable-extensions");
+        options.addArguments("--disable-plugins");
+        options.addArguments("--disable-images");
+        options.addArguments("--disable-javascript-harmony-shipping");
+        options.addArguments("--disable-background-timer-throttling");
+        options.addArguments("--disable-backgrounding-occluded-windows");
+        options.addArguments("--disable-renderer-backgrounding");
+        options.addArguments("--disable-features=TranslateUI");
+        options.addArguments("--disable-ipc-flooding-protection");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--window-size=1200,800");
+
         // ✅ Disable password manager & services
         options.addArguments("--disable-save-password-bubble");
         options.addArguments("--disable-credentials-enable-service");
@@ -79,16 +95,13 @@ async function initializeDriver(headless = false, log) {
         options.setUserPreferences({
             credentials_enable_service: false,
             "profile.password_manager_enabled": false,
+            "profile.default_content_setting_values.notifications": 2,
+            "profile.default_content_settings.popups": 0,
         });
 
         if (headless) {
             options.addArguments("--headless=new");
-            options.addArguments("--disable-gpu");
         }
-
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--window-size=800,600");
 
         const driver = new Builder()
             .forBrowser("chrome")
@@ -130,13 +143,25 @@ async function login(driver, log) {
     await driver.get(NAUKRI_LOGIN_URL);
 
     try {
-        await driver.wait(until.elementLocated(By.id("usernameField")), 20000);
-        await driver.findElement(By.id("usernameField")).sendKeys(username);
-        await driver.findElement(By.id("passwordField")).sendKeys(password);
-        await driver
-            .findElement(By.xpath("//button[contains(text(),'Login')]"))
-            .click();
-        await driver.sleep(2000);
+        // Faster login with reduced timeouts
+        await driver.wait(until.elementLocated(By.id("usernameField")), 10000);
+        
+        const usernameField = await driver.findElement(By.id("usernameField"));
+        const passwordField = await driver.findElement(By.id("passwordField"));
+        
+        // Clear and type faster
+        await usernameField.clear();
+        await usernameField.sendKeys(username);
+        await passwordField.clear();
+        await passwordField.sendKeys(password);
+        
+        const loginButton = await driver.findElement(By.xpath("//button[contains(text(),'Login')]"));
+        await loginButton.click();
+        
+        // Wait for navigation instead of fixed sleep
+        await driver.wait(until.urlContains("naukri.com"), 8000);
+        await driver.sleep(500); // Minimal wait for page stabilization
+        
         return true;
     } catch (error) {
         log(`Login error: ${error.message}`, "ERROR");
@@ -149,7 +174,7 @@ async function scrollAndClick(driver, element) {
         "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
         element
     );
-    await driver.sleep(1000);
+    await driver.sleep(300); // Reduced from 1000ms
     await driver.executeScript("arguments[0].click();", element);
     return true;
 }
@@ -169,6 +194,35 @@ async function closeTabAndSwitchToMain(driver) {
         await driver.close();
         await driver.switchTo().window(windows[0]);
     }
+}
+
+// Fast utility for checking element existence without waiting
+async function elementExists(driver, locator, timeout = 1000) {
+    try {
+        await driver.wait(until.elementLocated(locator), timeout);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+// Batch process multiple elements for faster operations
+async function batchProcessElements(driver, elements, processor, concurrency = 3) {
+    const results = [];
+    for (let i = 0; i < elements.length; i += concurrency) {
+        const batch = elements.slice(i, i + concurrency);
+        const batchPromises = batch.map((element, index) => 
+            processor(element, i + index).catch(error => ({ error, index: i + index }))
+        );
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+        
+        // Small delay between batches to prevent overwhelming
+        if (i + concurrency < elements.length) {
+            await driver.sleep(200);
+        }
+    }
+    return results;
 }
 
 function setupShutdownHandlers(log) {
@@ -213,6 +267,8 @@ export {
     scrollAndClick,
     switchToTab,
     closeTabAndSwitchToMain,
+    elementExists,
     setupShutdownHandlers,
     writePidFile,
+    batchProcessElements,
 };
