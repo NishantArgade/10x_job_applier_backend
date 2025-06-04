@@ -83,7 +83,7 @@ async function initializeDriver(headless = false, log) {
         options.addArguments("--disable-features=TranslateUI");
         options.addArguments("--disable-ipc-flooding-protection");
         options.addArguments("--no-sandbox");
-        options.addArguments("--window-size=1200,800");
+        options.addArguments("--window-size=800,600");
 
         // ✅ Disable password manager & services
         options.addArguments("--disable-save-password-bubble");
