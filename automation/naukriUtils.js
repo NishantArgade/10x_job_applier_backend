@@ -79,7 +79,7 @@ async function initializeDriver(headless = false, log) {
 
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--window-size=1920,1080");
+        options.addArguments("--window-size=800,600");
 
         // Try to get Chrome version
         log("Checking Chrome browser version...");
